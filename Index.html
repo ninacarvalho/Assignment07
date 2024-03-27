@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ITC5202 - Module - 10</title>
+</head>
+<body>
+  <h1>Weather of Toronto</h1>
+  <button type="button" onclick="displayWeather()">Display the Weather</button>
+  <div id="output"></div>
+  <br>
+  <p id="weatherInfo"></p>
+
+  <script>
+    const apiUrl = 'https://api.openweathermap.org/data/2.5/weather?q=Toronto&appid=b1aa5572eb3d44bf18cc164206c82c16';
+    const apiUrlFr = apiUrl + '&lang=fr';
+    let weatherData;
+    let main;
+    let weather;
+    let wind;
+
+    const outputElement = document.getElementById('output');
+    const weatherInfoElement = document.getElementById('weatherInfo');
+
+    fetch(apiUrl)
+      .then(response => response.json())
+      .then(data => {
+        weatherData = data;
+      })
+      .catch(error => {
+        console.error('Error fetching weather data:', error);
+      });
+     
+    function displayWeather() {
+      checkWeatherDataValidity();
+      buildObject();
+      //display the wind speed, feels like temperature and weather description and weather icon
+      
+      const windSpeed = `wind speed: ${wind.speed}`;
+      const weatherDescription = `Description: ${weather.main}, ${weather.description}`;
+      const temperatureInfo = `Feels like: ${main.feels_like}`;
+
+      weatherInfoElement.textContent = windSpeed + ', ' + weatherDescription + ', ' + temperatureInfo;
+    }
+    function buildObject() {
+      main = weatherData.main;
+      weather = weatherData.weather[0];
+      wind = weatherData.wind;
+    }
+
+    function checkWeatherDataValidity() {
+      if (!weatherData) {
+        outputElement.textContent = 'loading...';
+        return false;
+      }
+      outputElement.textContent = '';
+      return true;
+    }
+
+  </script>
+</body>
+</html>

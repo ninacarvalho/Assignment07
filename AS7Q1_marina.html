@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ITC5202 - Module - 10</title>
+</head>
+<body>
+  <h1>Weather of Toronto</h1>
+  <button type="button" onclick="loadWeather()">Display the Weather</button>
+  <div id="output"></div>
+  <br><br>
+  <p id="weatherInfo"></p>
+
+  <script>
+    const apiUrl = 'https://api.openweathermap.org/data/2.5/weather?q=Toronto&appid=b1aa5572eb3d44bf18cc164206c82c16';
+    const outputElement = document.getElementById('output');
+    const weatherInfoElement = document.getElementById('weatherInfo');
+
+    function loadWeather() {
+      fetch(apiUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          displayWeather(data);
+        })
+        .catch(error => {
+          console.error('There was a problem with the fetch operation:', error);
+          outputElement.textContent = 'Failed to fetch weather data';
+        });
+    }
+
+    //wind speed, feels like temperature and weather description and weather icon
+        
+    function displayWeather(data) {
+      checkWeatherDataValidity(data);
+      const weather = data.weather[0];
+      const main = data.main;
+      const weatherDescription = `${weather.main}, ${weather.description}`;
+      const temperatureInfo = `Min temp: ${main.temp_min}, Max temp: ${main.temp_max}`;
+
+      weatherInfoElement.textContent = weatherDescription + ', ' + temperatureInfo;
+    }
+
+    function displayWeatherCopy(data) {
+      if (!data || !data.weather || !data.main) {
+        outputElement.textContent = 'Weather data unavailable';
+        return;
+      }
+      const weather = data.weather[0];
+      const main = data.main;
+      const weatherDescription = `${weather.main}, ${weather.description}`;
+      const temperatureInfo = `Min temp: ${main.temp_min}, Max temp: ${main.temp_max}`;
+
+      weatherInfoElement.textContent = weatherDescription + ', ' + temperatureInfo;
+    }
+
+  function checkWeatherDataValidity(data) {
+  if (!data || !data.weather || !data.main) {
+    outputElement.textContent = 'Weather data unavailable';
+    return false;
+  }
+  return true;
+  }
+  </script>
+</body>
+</html>
