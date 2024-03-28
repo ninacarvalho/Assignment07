@@ -4,68 +4,138 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ITC5202 - Assignment 07</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: cornflowerblue;
+      color: #333;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    button {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .weather-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .weather-icon img {
+      margin-top: 20px;
+      width: 100px;
+      height: 100px;
+    }
+
+    .weather-info p {
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
   <h1>Weather of Toronto</h1>
   <button type="button" onclick="displayWeather()">Display the Weather</button>
-  <div id="output"></div>
-  <br>
-  <div id="iconDiv"></div>
-
-  <div id="weatherInfo"></div>
+  <div class="weather-container">
+    <div id="output"></div>
+    <div id="iconDiv" class="weather-icon"></div>
+    <div id="weatherInfo"></div>
+  </div>
 
   <script>
-    const apiUrl = 'https://api.openweathermap.org/data/2.5/weather?q=Toronto&appid=b1aa5572eb3d44bf18cc164206c82c16&units=metric';
-    const apiUrlFr = apiUrl + '&lang=fr';
+    const apiKey = 'b1aa5572eb3d44bf18cc164206c82c16';
+    const cityName = 'Toronto';
+    
+    function buildApiUrl(language = 'en') {
+      return `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric&lang=${language}`;
+    }
 
     let weather;
     let weatherFr;
-    let icon;
 
     const outputElement = document.getElementById('output');
+    const iconDiv = document.getElementById('iconDiv');
     const weatherInfoElement = document.getElementById('weatherInfo');
-
-    function getIconUrl(icon) {
-      return `https://openweathermap.org/img/wn/${icon}@2x.png`;
-    }
 
     function fetchWeatherData(url) {
       return fetch(url)
         .then(response => {
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Unable to fetch weather data. Please try again later.');
           }
           return response.json();
         })
         .catch(error => {
           console.error('Error fetching weather data:', error);
+          outputElement.textContent = 'Error fetching weather data. Please try again later.';
         });
     }
 
-    Promise.all([fetchWeatherData(apiUrl), fetchWeatherData(apiUrlFr)])
-      .then(data => {
-        weather = new Weather(data[0]);
-        weatherFr = new Weather(data[1]);
-      });
-    
+    async function displayWeather() {
+      try {
+        const [weatherData, weatherFrData] = await Promise.all([
+          fetchWeatherData(buildApiUrl()),
+          fetchWeatherData(buildApiUrl('fr'))
+        ]);
 
-     
-    function displayWeather() {
-      checkWeatherDataValidity();
-      const windSpeed = `wind speed: ${weather.wind.speed}`;
+        weather = new Weather(weatherData);
+        weatherFr = new Weather(weatherFrData);
+
+        renderWeather();
+      } catch (error) {
+        console.error('Error displaying weather:', error);
+      }
+    }
+
+    function renderWeather() {
+      if (!checkWeatherDataValidity()) return;
+
+      const windSpeed = `Wind Speed: ${weather.wind.speed} m/s`;
       const weatherDescription = `Description: ${weather.weather.main}, ${weather.weather.description}`;
       const weatherDescriptionFr = `Description (FR): ${weatherFr.weather.main}, ${weatherFr.weather.description}`;
-      const icon = weather.weather.icon;
+      const temperatureInfo = `Feels Like: ${weather.main.feels_like}°C`;
 
-      const temperatureInfo = `Feels like: ${weather.main.feels_like}°C`;
-
-      iconDiv.innerHTML = `<img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather icon" />`;
+      iconDiv.innerHTML = `<img src="${getIconUrl(weather.weather.icon)}" alt="weather icon" />`;
 
       weatherInfoElement.innerHTML = `
         <p>${windSpeed}</p>
         <p>${weatherDescription}</p> 
         <p>${weatherDescriptionFr}</p>
         <p>${temperatureInfo}</p>`;
+    }
+
+    function getIconUrl(icon) {
+      return `https://openweathermap.org/img/wn/${icon}@2x.png`;
     }
 
     class Weather {
@@ -86,14 +156,13 @@
     }
 
     function checkWeatherDataValidity() {
-      if (!weather) {
-        outputElement.textContent = 'loading, try again';
+      if (!weather || !weatherFr) {
+        outputElement.textContent = 'Loading, please try again.';
         return false;
       }
       outputElement.textContent = '';
       return true;
     }
-
   </script>
 </body>
 </html>
