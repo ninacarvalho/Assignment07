@@ -4,10 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ITC5202 - Assignment 07</title>
+  <style>
+        body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #output {
+      text-align: center;
+      color: red;
+      margin-bottom: 20px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      background-color: cornflowerblue;
+      padding: 20px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
 </head>
 <body>
   <h1>Weather Forecast</h1>
-  <button type="button" onclick="displayAll()">Display the Weather</button>
+  <button type="button" onclick="displayWeatherForecast()">Display the Weather</button>
   <div id="output"></div>
   <br>
 
@@ -15,19 +63,16 @@
   </ul>
 
   <script>
-    const apiUrl = 'http://api.openweathermap.org/data/2.5/find?q=Cleveland&cnt=20&appid=b1aa5572eb3d44bf18cc164206c82c16';
-    const apiUrlFr = apiUrl + '&lang=fr';
+    const apiKey = 'b1aa5572eb3d44bf18cc164206c82c16';
+    const city = 'Cleveland';
+    const apiUrl = `https://api.openweathermap.org/data/2.5/find?q=${city}&cnt=20&appid=${apiKey}`;
+    const apiUrlFr = `${apiUrl}&lang=fr`;
 
-    let weatherList;
-    let weatherListFr;
-    let icon;
+    let weatherList = [];
+    let weatherListFr = [];
 
     const outputElement = document.getElementById('output');
     const weatherListElement = document.getElementById('weatherList');
-
-    function getIconUrl(icon) {
-      return `https://openweathermap.org/img/wn/${icon}@2x.png`;
-    }
 
     function fetchWeatherData(url) {
       return fetch(url)
@@ -39,33 +84,42 @@
         })
         .catch(error => {
           console.error('Error fetching weather data:', error);
+          outputElement.textContent = 'Error fetching weather data. Please try again later.';
         });
     }
 
-    Promise.all([fetchWeatherData(apiUrl), fetchWeatherData(apiUrlFr)])
-      .then(data => {
-        weatherList = data[0].list;
-        weatherListFr = data[1].list;
-      });
-
-    function displayAll() {
-      checkWeatherDataValidity();
-      for (let i = 0; i < weatherList.length; i++) {
-        displayWeather( new Weather(weatherList[i]), new Weather(weatherListFr[i]), weatherListElement);
+    async function fetchAllWeatherData() {
+      try {
+        const [data, dataFr] = await Promise.all([fetchWeatherData(apiUrl), fetchWeatherData(apiUrlFr)]);
+        weatherList = data.list || [];
+        weatherListFr = dataFr.list || [];
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
       }
     }
-     
+
+    function displayWeatherForecast() {
+      if (weatherList.length === 0 || weatherListFr.length === 0) {
+        outputElement.textContent = 'Weather data is not available. Please try again later.';
+        return;
+      }
+
+      weatherListElement.innerHTML = ''; // Clear previous data
+      weatherList.forEach((weather, index) => {
+        const weatherFr = weatherListFr[index];
+        displayWeather(new Weather(weather), new Weather(weatherFr), weatherListElement);
+      });
+    }
+
     function displayWeather(weather, weatherFr, listElement) {
-      const name = weather.name
-      const windSpeed = `wind speed: ${weather.wind.speed}`;
+      const name = weather.name;
+      const windSpeed = `Wind Speed: ${weather.wind.speed} m/s`;
       const weatherDescription = `Description: ${weather.weather.main}, ${weather.weather.description}`;
       const weatherDescriptionFr = `Description (FR): ${weatherFr.weather.main}, ${weatherFr.weather.description}`;
-      const icon = weather.weather.icon;
-
-      const temperatureInfo = `Feels like: ${weather.main.feels_like}°C`;
+      const temperatureInfo = `Feels Like: ${weather.main.feels_like}°C`;
 
       const iconElement = document.createElement('img');
-      iconElement.src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+      iconElement.src = getIconUrl(weather.weather.icon);
       iconElement.alt = 'weather icon';
 
       const listItem = document.createElement('li');
@@ -78,6 +132,10 @@
       listItem.appendChild(iconElement);
 
       listElement.appendChild(listItem);
+    }
+
+    function getIconUrl(icon) {
+      return `https://openweathermap.org/img/wn/${icon}@2x.png`;
     }
 
     class Weather {
@@ -96,14 +154,12 @@
       }
     }
 
-    function checkWeatherDataValidity() {
-      if (!weatherList) {
-        outputElement.textContent = 'loading, try again';
-        return false;
-      }
-      outputElement.textContent = '';
-      return true;
+    async function init() {
+      await fetchAllWeatherData();
+      // Optionally, display initial data here
     }
+
+    init();
 
   </script>
 </body>
