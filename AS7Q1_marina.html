@@ -76,17 +76,21 @@
     const apiKey = 'b1aa5572eb3d44bf18cc164206c82c16';
     const cityName = 'Toronto';
     
+    // Builds API URL for weather data
     function buildApiUrl(language = 'en') {
       return `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric&lang=${language}`;
     }
 
+    // Variables for storing weather data
     let weather;
     let weatherFr;
 
+    // DOM elements for displaying weather information
     const outputElement = document.getElementById('output');
     const iconDiv = document.getElementById('iconDiv');
     const weatherInfoElement = document.getElementById('weatherInfo');
 
+    //Fetches weather data from API
     function fetchWeatherData(url) {
       return fetch(url)
         .then(response => {
@@ -101,6 +105,7 @@
         });
     }
 
+    // Displays weather information
     async function displayWeather() {
       try {
         const [weatherData, weatherFrData] = await Promise.all([
@@ -117,6 +122,7 @@
       }
     }
 
+    // Renders weather information on the page
     function renderWeather() {
       if (!checkWeatherDataValidity()) return;
 
@@ -125,8 +131,10 @@
       const weatherDescriptionFr = `Description (FR): ${weatherFr.weather.main}, ${weatherFr.weather.description}`;
       const temperatureInfo = `Feels Like: ${weather.main.feels_like}°C`;
 
+      // Display weather icon
       iconDiv.innerHTML = `<img src="${getIconUrl(weather.weather.icon)}" alt="weather icon" />`;
-
+      
+      // Display weather information
       weatherInfoElement.innerHTML = `
         <p>${windSpeed}</p>
         <p>${weatherDescription}</p> 
@@ -134,6 +142,7 @@
         <p>${temperatureInfo}</p>`;
     }
 
+    // Gets URL for weather icon
     function getIconUrl(icon) {
       return `https://openweathermap.org/img/wn/${icon}@2x.png`;
     }
@@ -155,6 +164,7 @@
       }
     }
 
+    // Checks validity of weather data
     function checkWeatherDataValidity() {
       if (!weather || !weatherFr) {
         outputElement.textContent = 'Loading, please try again.';
